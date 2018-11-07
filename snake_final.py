@@ -3,6 +3,8 @@ from termcolor import colored, cprint
 from curses import KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN
 from random import randint  # koordináták miatt
 import os  # clear parancs miatt
+import pickle
+from operator import itemgetter
 
 points = 0  # Variable that defines the default score
 name = " "
@@ -192,6 +194,7 @@ def customize():
     curses.noecho()  # nem jeleniti meg a leutott billenytűt
     curses.curs_set(False)  # Turns off the blinking cursor
 
+    
     key = KEY_RIGHT  # Variable that refers to the key pressed
     prevKey = KEY_RIGHT
 
@@ -259,15 +262,51 @@ def menu():
     os.system('clear')
 
 
+def read_score():
+
+    os.system('clear')
+    high_scores = []
+    with open('highscores.txt', 'rb') as f:
+        high_scores = pickle.load(f)
+    
+    high_scores = sorted(high_scores, key = itemgetter(1), reverse = True)[:10]
+
+    '''
+    for i in high_scores:
+        for j in range(0, 40):
+            print(" ", end="")
+        print(i[0], i[1])
+    
+
+    '''
+    cprint('                                  HIGH SCORE ', 'green', attrs=['blink'])
+    print('-' * 80)
+
+    for i in high_scores:
+        print(i[0].rjust(38), str(i[1]).rjust(5))
+
+    print('-' * 80)
+    
+    input()
+    os.system('clear')
+
+    
+
 def score():
 
     os.system('clear')
-    file = open('score.txt')
-    lines = file.readlines()
-    file.close()
-    file = open('score.txt', 'w')
-    lines = file.readlines()
-    file.close()
+    high_scores = []
+    with open('highscores.txt', 'rb') as f:
+        high_scores = pickle.load(f)
+
+    high_scores.append((name, points))
+    high_scores = sorted(high_scores, key = itemgetter(1), reverse = True)[:10]
+
+    with open('highscores.txt', 'wb') as f:
+        pickle.dump(high_scores, f)
+
+
+
 
 
 def player_Name():
@@ -276,34 +315,46 @@ def player_Name():
 
 
 def options():
+
+    
     os.system('clear')
     win = curses.initscr()  # Initializing curses module
     win.keypad(True)  # Allows to use special keys with curses
     curses.noecho()  # nem jeleniti meg a leutott billenytűt
     curses.curs_set(False)  # Turns off the blinking cursor
+    
+
 
     key = KEY_RIGHT  # Variable that refers to the key pressed
     prevKey = KEY_RIGHT
 
-    win.addstr(3, 15, 'Select a game mode with a corresponding number!')
-    win.addstr(10, 32, '1. Classic Mode ')
-    win.addstr(12, 32, '2. COOL Mode ')
-    win.addstr(14, 32, '3. Customize')
-    win.addstr(16, 32, '                               ')
-    win.addstr(20, 20, 'Or hit any of the other keys to exit.')
-    x = win.getch()
-    key = key if x == -1 else x
-    valid_keys = [49, 50, 51]
+    while key != 27:
+        win.clear()
+        win.addstr(3, 16, 'Select an option with a corresponding number!')
+        win.addstr(8, 32, '1. Classic Mode ')
+        win.addstr(10, 32, '2. COOL Mode ')
+        win.addstr(12, 32, '3. Customize')
+        win.addstr(14, 32, '4. High Score                               ')
+        win.addstr(20, 30, 'Or hit ESC to exit.')
+        x = win.getch()
+        key = key if x == -1 else x
+        valid_keys = [27, 49, 50, 51, 52]
 
-    if key not in valid_keys:
-        key = prevKey
+        if key not in valid_keys:
+            key = prevKey
 
-    if key == 49:
-        classic_Snake()
-    elif key == 50:
-        cool_Snake()
-    elif key == 51:
-        customize()
+        if key == 49:
+            classic_Snake()
+            score()
+        elif key == 50:
+            cool_Snake()
+            score()
+        elif key == 51:
+            customize()
+        elif key == 52:
+            curses.endwin()
+            read_score()
+
 
     curses.endwin()
 
@@ -312,7 +363,7 @@ def main():
     menu()
     player_Name()
     options()
-    print(f'Well done {name}! You scored {points} points.')
+    #print(f'Well done {name}! You scored {points} points.')
 
 
 if __name__ == '__main__':
